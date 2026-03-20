@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  LECTURER
+  ADMIN
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  passwordHash String
+  role         UserRole     @default(LECTURER)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  submissions  Submission[]
+}
+
+model Submission {
+  id               String    @id @default(uuid())
+  originalFileName String
+  storedFileName   String
+  filePath         String
+  fileType         String
+  fileSize         Int
+  extractedText    String
+  cleanedText      String
+  uploadedById     String
+  uploadedBy       User      @relation(fields: [uploadedById], references: [id])
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  result           Result?   @relation("SubmissionResult")
+  matchedInResults Result[]  @relation("MatchedSubmission")
+}
+
+model Result {
+  id                  String      @id @default(uuid())
+  submissionId        String      @unique
+  submission          Submission  @relation("SubmissionResult", fields: [submissionId], references: [id])
+  matchedSubmissionId String?
+  matchedSubmission   Submission? @relation("MatchedSubmission", fields: [matchedSubmissionId], references: [id])
+  similarityScore     Int
+  colorIndicator      String
+  riskLevel           String
+  createdAt           DateTime    @default(now())
+}
