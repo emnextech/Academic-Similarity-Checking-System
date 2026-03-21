@@ -10,7 +10,18 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(16),
   CLIENT_URL: z.string().url(),
-  UPLOAD_DIR: z.string().min(1)
+  UPLOAD_DIR: z.string().min(1),
+  ENABLE_EXTERNAL_SCAN: z
+    .string()
+    .optional()
+    .transform((value) => value === "true"),
+  ENABLE_INTERNAL_SIMILARITY: z
+    .string()
+    .optional()
+    .transform((value) => value === "true"),
+  OPENALEX_API_KEY: z.string().optional(),
+  SEMANTIC_SCHOLAR_API_KEY: z.string().optional(),
+  EXTERNAL_SCAN_TIMEOUT_MS: z.coerce.number().int().positive().default(12000)
 });
 
 const parsed = EnvSchema.safeParse(process.env);

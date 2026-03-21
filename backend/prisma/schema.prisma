@@ -20,6 +20,7 @@ model User {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   submissions  Submission[]
+  markedResults Result[]    @relation("ResultMarker")
 }
 
 model Submission {
@@ -37,6 +38,7 @@ model Submission {
   updatedAt        DateTime  @updatedAt
   result           Result?   @relation("SubmissionResult")
   matchedInResults Result[]  @relation("MatchedSubmission")
+  externalScan     ExternalScan?
 }
 
 model Result {
@@ -48,5 +50,55 @@ model Result {
   similarityScore     Int
   colorIndicator      String
   riskLevel           String
+  matchedPassages     Json?
+  reviewStatus        ReviewStatus @default(PENDING_REVIEW)
+  markScore           Float?
+  markerComment       String?
+  markedById          String?
+  markedBy            User?        @relation("ResultMarker", fields: [markedById], references: [id])
+  markedAt            DateTime?
   createdAt           DateTime    @default(now())
+}
+
+enum ReviewStatus {
+  PENDING_REVIEW
+  IN_REVIEW
+  MARKED
+}
+
+enum ExternalScanStatus {
+  QUEUED
+  SUBMITTED
+  COMPLETED
+  FAILED
+}
+
+model ExternalScan {
+  id             String             @id @default(uuid())
+  submissionId   String             @unique
+  submission     Submission         @relation(fields: [submissionId], references: [id])
+  provider       String
+  providerScanId String             @unique
+  status         ExternalScanStatus @default(QUEUED)
+  rawPayload     Json?
+  errorMessage   String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  completedAt    DateTime?
+  sourceMatches  ExternalSourceMatch[]
+}
+
+model ExternalSourceMatch {
+  id             String       @id @default(uuid())
+  externalScanId String
+  externalScan   ExternalScan @relation(fields: [externalScanId], references: [id], onDelete: Cascade)
+  sourceType     String?
+  title          String?
+  url            String?
+  matchedWords   Int?
+  similarity     Int?
+  snippet        String?
+  sourceSnippet  String?
+  metadata       Json?
+  createdAt      DateTime     @default(now())
 }
